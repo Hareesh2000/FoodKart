@@ -1,8 +1,10 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.contrib import messages,auth
-from accounts.utils import check_role_customer, check_role_vendor, detectUser
+from accounts.utils import check_role_customer, check_role_vendor, detectUser, send_email
+from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.decorators import login_required,user_passes_test
+from django.contrib.auth.tokens import default_token_generator
 from restaurant.forms import RestaurantForm
 from .models import User, UserProfile
 
@@ -27,7 +29,10 @@ def registerUser(request):
             user=User.objects.create_user(first_name=first_name,last_name=last_name,username=username,email=email,password=password)
             user.role=User.CUSTOMER
             user.save()
-            messages.success(request,"Yor account has been created successfully")
+            mail_subject='Please activate your account'
+            email_template='accounts/emails/account_verification_email.html'
+            send_email(request,user,mail_subject,email_template)   
+            messages.success(request,"Your account has created successfully!")
             return redirect('registerUser')
     else:
         form=UserForm()
@@ -57,6 +62,7 @@ def registerRestaurant(request):
             user_profile=UserProfile.objects.get(user=user)
             res.user_profile=user_profile
             res.save()
+            send_email(request,user)   
             messages.success(request,'Your request has been sent successfully! Please wait for the approval.')
         else:
             pass
@@ -70,6 +76,23 @@ def registerRestaurant(request):
         'res_form':res_form,
     }
     return render(request,'accounts/registerRestaurant.html',context)
+
+def activate(request,uidb64,token):
+    try:
+        uid=urlsafe_base64_decode(uidb64).decode()
+        user=User._default_manager.get(pk=uid)
+
+    except(TypeError,ValueError,OverflowError,User.DoesNotExist):
+        user=None
+
+    if user is not None and default_token_generator.check_token(user,token):
+        user.is_active=True
+        user.save()
+        messages.success(request,"You have been activated!")
+    else:
+        messages.error(request,"Invalid activation link")
+    
+    return redirect('myAccount')
 
 def login(request):
     if request.user.is_authenticated:
@@ -109,3 +132,57 @@ def custDashboard(request):
 @user_passes_test(check_role_vendor)
 def restDashboard(request):
     return render(request,'accounts/restDashboard.html')
+
+def forgot_password(request):
+    if request.method=='POST':
+        email=request.POST['email']
+
+        if User.objects.filter(email=email).exists():
+            user=User.objects.get(email__exact=email)
+            mail_subject='Reset your password'
+            email_template='accounts/emails/forgot_password_email.html'
+            send_email(request,user,mail_subject,email_template)
+
+            messages.success(request,'Password reset link has been sent to your email address')
+            return redirect('login')
+        else:
+            messages.error(request,'Account doesn\'t exist')
+            return redirect('login')
+
+    return render(request,'accounts/forgot_password.html')
+
+def reset_password_validate(request,uidb64,token):
+    try:
+        uid=urlsafe_base64_decode(uidb64).decode()
+        user=User._default_manager.get(pk=uid)
+
+    except(TypeError,ValueError,OverflowError,User.DoesNotExist):
+        user=None
+
+    if user is not None and default_token_generator.check_token(user,token):
+        request.session['uid']=uid
+        messages.info(request,'Please set your password')
+        return redirect('reset_password')
+    else:
+        messages.error(request,'This link has been expired')
+        return redirect('myAccount') 
+
+
+def reset_password(request):
+    if request.method == 'POST':
+        password=request.POST['password']
+        confirm_password=request.POST['confirm_password']
+
+        if password==confirm_password:
+            pk=request.session['uid']
+            user=User.objects.get(pk=pk)
+            user.set_password(password)
+            user.is_active=True
+            user.save()
+            messages.success(request,'Your password reset was successful')
+            return redirect('login')
+        else:
+            messages.error('Passwords don\'t match')
+            return redirect('reset_password')
+
+    return render(request,'accounts/reset_password.html')
