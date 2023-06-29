@@ -91,7 +91,6 @@ class UserProfile(models.Model):
      address_line_1= models.CharField(max_length=50,blank=True,null=True)
      address_line_2= models.CharField(max_length=50,blank=True,null=True)
      country=models.CharField(max_length=15,blank=True,null=True)
-     country=models.CharField(max_length=15,blank=True,null=True)
      state=models.CharField(max_length=15,blank=True,null=True)
      city=models.CharField(max_length=15,blank=True,null=True)
      pin_code=models.CharField(max_length=6,blank=True,null=True)
@@ -104,7 +103,9 @@ class UserProfile(models.Model):
           return self.user.email
 
 
-
+     def full_address(self):
+          return f'{self.address_line_1}, {self.address_line_2}'
+     
 
 
 

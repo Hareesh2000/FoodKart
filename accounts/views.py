@@ -55,17 +55,19 @@ def registerRestaurant(request):
             email=user_form.cleaned_data['email']
             password=user_form.cleaned_data['password']
             user=User.objects.create_user(first_name=first_name,last_name=last_name,username=username,email=email,password=password)
-            user.role=User.RESTAURANT
+            user.role=User.VENDOR
             user.save()
             res=res_form.save(commit=False)
             res.user=user
             user_profile=UserProfile.objects.get(user=user)
             res.user_profile=user_profile
             res.save()
-            send_email(request,user)   
+            mail_subject='Please activate your account'
+            email_template='accounts/emails/account_verification_email.html'
+            send_email(request,user,mail_subject,email_template)    
             messages.success(request,'Your request has been sent successfully! Please wait for the approval.')
         else:
-            pass
+            print('KeyErro')
 
     else:
         user_form=UserForm()
