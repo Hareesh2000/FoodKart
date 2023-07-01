@@ -1,3 +1,4 @@
+from django.conf import settings
 from restaurant.models import Restaurant
 
 def get_restaurant(request):
@@ -6,3 +7,6 @@ def get_restaurant(request):
     except:
         restaurant=None
     return dict(restaurant=restaurant)
+
+def get_google_api(request):
+    return {'GOOGLE_API_KEY':settings.GOOGLE_API_KEY}
