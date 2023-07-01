@@ -2,10 +2,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from accounts.forms import UserProfileForm
 from accounts.models import UserProfile
 from accounts.utils import check_role_vendor
+from menu.models import Category, FoodItem
 from restaurant.models import Restaurant
 from .forms import RestaurantForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required,user_passes_test
+
 
 
 @login_required(login_url='login')
@@ -33,3 +35,8 @@ def profile(request):
         'rest_form':rest_form,
     }
     return render(request,'restaurant/restProfile.html',context)
+
+
+
+
+

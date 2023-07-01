@@ -1,0 +1,86 @@
+from django.shortcuts import get_object_or_404, redirect, render
+
+from django.contrib.auth.decorators import login_required,user_passes_test
+
+from accounts.utils import check_role_vendor
+from menu.forms import CategoryForm
+from menu.models import Category, FoodItem
+from menu.utils import get_restaurant
+from django.contrib import messages
+
+from django.template.defaultfilters import slugify
+# Create your views here.
+
+@login_required(login_url='login')
+@user_passes_test(check_role_vendor)
+def menu_builder(request):
+    restaurant=get_restaurant(request)
+    categories=Category.objects.filter(restaurant=restaurant).order_by('created_at')
+
+    context={
+        'categories':categories,
+    }
+    return render(request,'menu/menu_builder.html',context)
+
+
+@login_required(login_url='login')
+@user_passes_test(check_role_vendor)
+def fooditems_by_category(request,pk=None):
+    restaurant=get_restaurant(request)
+    category=get_object_or_404(Category,pk=pk)
+    fooditems=FoodItem.objects.filter(restaurant=restaurant,category=category)
+    context={
+        'fooditems':fooditems,
+        'category':category,
+    }
+    return render(request,'menu/fooditems_by_category.html',context)
+
+def add_category(request):
+    if request.method=='POST':
+        cat_form=CategoryForm(request.POST)
+        if cat_form.is_valid():
+            category=cat_form.save(commit=False)
+            category.restaurant=get_restaurant(request)
+            category_name=cat_form.cleaned_data['category_name']
+            category.slug=slugify(category_name)
+            cat_form.save()
+            messages.success(request,'Category added successfully!')
+            return redirect('menu_builder')
+
+
+    else:
+        cat_form=CategoryForm()
+
+    context={
+        'cat_form':cat_form,
+    }
+    return render(request,'menu/add_category.html',context)
+
+def edit_category(request,pk=None):
+    category=get_object_or_404(Category,pk=pk)
+    if request.method=='POST':
+        cat_form=CategoryForm(request.POST,instance=category)
+        if cat_form.is_valid():
+            category=cat_form.save(commit=False)
+            category.restaurant=get_restaurant(request)
+            category_name=cat_form.cleaned_data['category_name']
+            category.slug=slugify(category_name)
+            cat_form.save()
+            messages.success(request,'Category updated successfully!')
+            return redirect('menu_builder')
+
+
+    else:
+        cat_form=CategoryForm(instance=category)
+
+    context={
+        'cat_form':cat_form,
+        'category':category,
+    }
+    return render(request,'menu/edit_category.html',context)
+
+def delete_category(request,pk=None):
+    category=get_object_or_404(Category,pk=pk)
+    category.delete()
+    messages.success(request,"Category has been deleted successfully!")
+    return redirect('menu_builder')
