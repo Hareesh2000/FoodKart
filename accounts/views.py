@@ -133,7 +133,7 @@ def custDashboard(request):
 @login_required(login_url='login')
 @user_passes_test(check_role_vendor)
 def restDashboard(request):
-    return render(request,'accounts/restDashboard.html')
+    return render(request,'restaurant/restDashboard.html')
 
 def forgot_password(request):
     if request.method=='POST':
