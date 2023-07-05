@@ -1,11 +1,17 @@
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from marketplace.context_processors import get_cart_counter, get_cart_totals
 from marketplace.models import Cart
 from menu.models import Category, FoodItem
 from django.db.models import Prefetch
-from restaurant.models import Restaurant
+from restaurant.models import Restaurant 
+
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+
+from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.measure import D 
+from django.contrib.gis.db.models.functions import Distance
 
 
 def marketplace(request):
@@ -114,5 +120,41 @@ def delete_cartItem(request,cartItem_id):
             
         else:
             return JsonResponse({'status':'Failed','message':'Invalid request!'})
+        
+
+
+def search(request):
+    if not 'address' in request.GET:
+        return redirect('marketplace')
+    else:
+        address=request.GET['address']
+        latitude=request.GET['lat']
+        longitude=request.GET['lng']
+        radius=request.GET['radius']
+        keyword=request.GET['keyword']
+
+        rest_by_fooditems=FoodItem.objects.filter(food_name__icontains=keyword,is_available=True).values_list('restaurant',flat=True)
+        if latitude and longitude and radius:
+            pnt=GEOSGeometry('POINT(%s %s)' %(longitude,latitude))
+            restaurants=Restaurant.objects.filter(Q(id__in=rest_by_fooditems) | Q(restaurant_name__icontains=keyword,is_approved=True,user__is_active=True),
+                                                user_profile__location__distance_lte=(pnt,D(km=radius)) 
+                                                ).annotate(distance=Distance("user_profile__location",pnt)).order_by("distance")
+            
+            for res in restaurants:
+                res.dist=round(res.distance.km,1)
+        else:
+            restaurants=Restaurant.objects.filter(Q(id__in=rest_by_fooditems) | Q(restaurant_name__icontains=keyword,is_approved=True,user__is_active=True) )
+        
+        rest_count=restaurants.count()
+
+    
+
+    
+    context={
+        'restaurants':restaurants,
+        'rest_count':rest_count,
+        "source_location":address,
+    }
+    return render(request,'marketplace/rest_list.html',context)
 
    

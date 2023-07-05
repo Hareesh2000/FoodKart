@@ -46,6 +46,10 @@
                                             {% if restaurant.user_profile.address %}
                                             <span><small class="text-muted">{{restaurant.user_profile.address}}</small></span>
                                             {% endif %}
+                                            {% if source_location %}
+                                            <br>
+                                            <span><small><b>{{restaurant.dist}}kms</b> away from {{source_location}}</small></span>
+                                            {% endif %}
                                             
                                         </div>
                                         <div class="list-option">

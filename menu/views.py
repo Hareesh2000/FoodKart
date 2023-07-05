@@ -40,10 +40,13 @@ def add_category(request):
         cat_form=CategoryForm(request.POST)
         if cat_form.is_valid():
             category=cat_form.save(commit=False)
-            category.restaurant=get_restaurant(request)
             category_name=cat_form.cleaned_data['category_name']
-            category.slug=slugify(category_name)
-            cat_form.save()
+            category.restaurant=get_restaurant(request)
+            category.save()
+            
+            
+            category.slug=slugify(category_name)+'-'+str(category.id)
+            category.save()
             messages.success(request,'Category added successfully!')
             return redirect('menu_builder')
 
