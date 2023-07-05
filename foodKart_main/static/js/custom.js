@@ -5,7 +5,7 @@ autocomplete = new google.maps.places.Autocomplete(
     document.getElementById('id_address'),
     {
         types: ['geocode', 'establishment'],
-        //default in this app is "IN" - add your country code
+      
         componentRestrictions: {'country': ['in']},
     })
 // function to specify what should happen when the prediction is clicked
@@ -19,7 +19,7 @@ function onPlaceChanged (){
     if (!place.geometry){
         document.getElementById('id_address').placeholder = "Start typing...";
     }
-    // get the address components and assign them to the fields
+    // getting the address components and assign them to the fields
 
     var geocoder=new google.maps.Geocoder()
     var address=document.getElementById('id_address').value
@@ -63,3 +63,159 @@ function onPlaceChanged (){
 }
 
 
+$(document).ready(function(){
+    $('.add_to_cart').on('click',function(e){
+        e.preventDefault();
+        
+        food_id=$(this).attr('data-id');
+        url=$(this).attr('data-url');
+
+        data ={
+               
+        }
+        $.ajax({
+            type:'GET',
+            url:url,
+            data:data,
+            success: function(response){
+                if(response.status=='login_required'){
+                  swal(response.message,'','info').then(function(){
+                    window.location='/login';
+                  }) 
+                }
+                else if(response.status=='Failed'){
+                    swal(response.message,'','error')
+                  }
+                else{
+                    $('#cart_counter').html(response.cart_counter['cart_count']);
+                    $('#qty-'+food_id).html(response.qty);
+
+                    updateCart_totals(
+                        response.cart_totals['subtotal'],
+                        response.cart_totals['tax'],
+                        response.cart_totals['total']
+                    )
+                }
+
+
+            }
+
+        })
+
+    })
+
+    $('.del_from_cart').on('click',function(e){
+        e.preventDefault();
+        
+        cartItem_id=$(this).attr('id');
+        food_id=$(this).attr('data-id');
+        url=$(this).attr('data-url');
+
+        $.ajax({
+            type:'GET',
+            url:url,
+            success: function(response){
+                if(response.status=='login_required'){
+                    swal(response.message,'','info').then(function(){
+                      window.location='/login';
+                    }) 
+                  }
+                  else if(response.status=='Failed'){
+                      swal(response.message,'','error')
+                    }
+                  else{
+                      $('#cart_counter').html(response.cart_counter['cart_count']);
+                      $('#qty-'+food_id).html(response.qty);
+                      if(window.location.pathname == '/marketplace/cart/'){
+                        check_cartItem_empty(response.qty,cartItem_id);
+                        check_cart_empty();
+                        updateCart_totals(
+                            response.cart_totals['subtotal'],
+                            response.cart_totals['tax'],
+                            response.cart_totals['total']
+                        )
+                      }
+                      
+                  }
+
+            }
+
+        })
+
+
+        
+
+    })
+
+    $('.delete_cartItem').on('click',function(e){
+        e.preventDefault();
+ 
+        cartItem_id=$(this).attr('data-id');
+        url=$(this).attr('data-url');
+
+        $.ajax({
+            type:'GET',
+            url:url,
+            success: function(response){
+                if(response.status=='Failed'){
+                      swal(response.message,'','error')
+                    }
+                else{
+                      $('#cart_counter').html(response.cart_counter['cart_count']);
+                      swal(response.message,'','success')
+                      check_cartItem_empty(0,cartItem_id);
+                      check_cart_empty();
+                      updateCart_totals(
+                        response.cart_totals['subtotal'],
+                        response.cart_totals['tax'],
+                        response.cart_totals['total']
+                    )
+
+                  }
+
+            }
+
+        })
+    })
+
+    //function to delete cartitem if quantity is 0
+    function check_cartItem_empty(cartItem_qty,cartItem_id){
+        
+        if(cartItem_qty<=0){
+            document.getElementById("cart-item-"+cartItem_id).remove()
+        }
+    }
+
+    function check_cart_empty(){
+        var cart_counter=document.getElementById('cart_counter').innerHTML
+        if(cart_counter == 0)
+            document.getElementById("empty-cart").style.display ='block';
+    }
+
+    $('.item_qty').each(function(){
+        var the_id =$(this).attr('id')
+        var qty=$(this).attr('data-qty')
+        $('#'+the_id).html(qty)     
+    })
+
+    //to update subtotal,tax,total
+    function updateCart_totals(subtotal,tax,total){
+        if(window.location.pathname == '/marketplace/cart/'){
+                $('#subtotal').html(subtotal)
+                $('#tax').html(tax)
+                $('#total').html(total)
+        }
+    }
+
+    
+});
+
+
+
+
+
+
+
+
+
+    

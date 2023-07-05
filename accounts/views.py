@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib.auth.tokens import default_token_generator
 from restaurant.forms import RestaurantForm
 from .models import User, UserProfile
+from django.template.defaultfilters import slugify
 
 from .forms import UserForm
 
@@ -59,6 +60,8 @@ def registerRestaurant(request):
             user.save()
             res=res_form.save(commit=False)
             res.user=user
+            restaurant_name=res_form.cleaned_data['restaurant_name']
+            res.restaurant_slug=slugify(restaurant_name)+'-'+str(user.id)
             user_profile=UserProfile.objects.get(user=user)
             res.user_profile=user_profile
             res.save()
