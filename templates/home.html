@@ -88,9 +88,9 @@
 									<li class="has-border">
 										<figure>
 											{% if restaurant.user_profile.profile_picture %}
-											<a href="#"><img src="{{restaurant.user_profile.profile_picture.url}}" class="attachment-full size-full wp-post-image" alt=""></a>
+											<a href="{% url 'restaurant_details' restaurant.restaurant_slug %}"><img src="{{restaurant.user_profile.profile_picture.url}}" class="attachment-full size-full wp-post-image" alt=""></a>
 											{% else %}
-											<a href="#"><img src="{% static 'images/default-profile.png' %}" class="attachment-full size-full wp-post-image" alt=""></a>
+											<a href="{% url 'restaurant_details' restaurant.restaurant_slug %}"><img src="{% static 'images/default-profile.png' %}" class="attachment-full size-full wp-post-image" alt=""></a>
 											{% endif %}
 										</figure>
 									</li>
@@ -120,11 +120,11 @@
 										<div class="list-post featured">
 											<div class="img-holder">
 												<figure>
-													<a href="#">
 														{% if restaurant.user_profile.profile_picture %}
+													    <a href="{% url 'restaurant_details' restaurant.restaurant_slug %}">	
 														<img src="{{restaurant.user_profile.profile_picture.url}}" class="img-thumb wp-post-image" alt="">
 														{% else %}
-														<a href="#"><img src="{% static 'images/default-profile.png' %}" class="attachment-full size-full wp-post-image" alt=""></a>
+														<a href="{% url 'restaurant_details' restaurant.restaurant_slug %}"><img src="{% static 'images/default-profile.png' %}" class="attachment-full size-full wp-post-image" alt=""></a>
 														{% endif %}
 
 													</a>
@@ -137,13 +137,18 @@
 												
 												<div class="post-title">
 													<h5>
-														<a href="listing-detail.html">{{restaurant.restaurant_name}}</a>
+														<a href="{% url 'restaurant_details' restaurant.restaurant_slug %}">{{restaurant.restaurant_name}}</a>
 						
 													</h5>
 												</div>
 												{% if restaurant.user_profile.city %}
 												<span>{{restaurant.user_profile.city}} </span>
 												{% endif %}
+
+												{% if restaurant.dist %}
+                                            	<br>
+                                            	<span><small><b>{{restaurant.dist}}kms</b> away </small></span>
+                                            	{% endif %}
 											</div>
 											
 										</div>
