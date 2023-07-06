@@ -1,10 +1,11 @@
+from datetime import date, datetime
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from marketplace.context_processors import get_cart_counter, get_cart_totals
 from marketplace.models import Cart
 from menu.models import Category, FoodItem
 from django.db.models import Prefetch
-from restaurant.models import Restaurant 
+from restaurant.models import OpeningHour, Restaurant 
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -31,15 +32,27 @@ def restaurant_details(request,restaurant_slug):
             queryset=FoodItem.objects.filter(is_available=True)
         )
     )
+
     if request.user.is_authenticated:
         cart_items=Cart.objects.filter(user=request.user)
     else:
         cart_items=None
-        
+
+    opening_hours=OpeningHour.objects.filter(restaurant=restaurant)    
+
+    today_date=date.today()
+    today=today_date.isoweekday()  #monday->1...  
+    today_opening_hours=OpeningHour.objects.filter(restaurant=restaurant,day=today)
+
+ 
+ 
+
     context={
         'restaurant':restaurant,
         'categories':categories,
         'cart_items':cart_items,
+        'opening_hours':opening_hours,
+        'today_opening_hours':today_opening_hours,
     }
     return render(request,'marketplace/restaurant_details.html',context)
 

@@ -1,11 +1,11 @@
 from django.shortcuts import get_object_or_404, redirect, render
 
 from django.contrib.auth.decorators import login_required,user_passes_test
+from accounts.context_processors import get_restaurant
 
 from accounts.utils import check_role_vendor
 from menu.forms import CategoryForm, FoodItemForm
 from menu.models import Category, FoodItem
-from menu.utils import get_restaurant
 from django.contrib import messages
 
 from django.template.defaultfilters import slugify
@@ -14,7 +14,7 @@ from django.template.defaultfilters import slugify
 @login_required(login_url='login')
 @user_passes_test(check_role_vendor)
 def menu_builder(request):
-    restaurant=get_restaurant(request)
+    restaurant=get_restaurant(request)['restaurant']
     categories=Category.objects.filter(restaurant=restaurant).order_by('created_at')
 
     context={
