@@ -92,7 +92,7 @@ $(document).ready(function(){
 
                     updateCart_totals(
                         response.cart_totals['subtotal'],
-                        response.cart_totals['tax'],
+                        response.cart_totals['tax_dict'],
                         response.cart_totals['total']
                     )
                 }
@@ -131,7 +131,7 @@ $(document).ready(function(){
                         check_cart_empty();
                         updateCart_totals(
                             response.cart_totals['subtotal'],
-                            response.cart_totals['tax'],
+                            response.cart_totals['tax_dict'],
                             response.cart_totals['total']
                         )
                       }
@@ -167,7 +167,7 @@ $(document).ready(function(){
                       check_cart_empty();
                       updateCart_totals(
                         response.cart_totals['subtotal'],
-                        response.cart_totals['tax'],
+                        response.cart_totals['tax_dict'],
                         response.cart_totals['total']
                     )
 
@@ -199,11 +199,18 @@ $(document).ready(function(){
     })
 
     //to update subtotal,tax,total
-    function updateCart_totals(subtotal,tax,total){
+    function updateCart_totals(subtotal,tax_dict,total){
         if(window.location.pathname == '/marketplace/cart/'){
                 $('#subtotal').html(subtotal)
-                $('#tax').html(tax)
                 $('#total').html(total)
+
+                for(key1 in tax_dict){
+                    
+                    for(key2 in tax_dict[key1]){
+                     
+                        $('#tax-'+key1).html(tax_dict[key1][key2])
+                    }
+                }
         }
     }
 
