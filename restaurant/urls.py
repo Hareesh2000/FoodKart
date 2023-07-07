@@ -5,7 +5,7 @@ from accounts import views as AccountViews
 
 urlpatterns = [
     path('',AccountViews.restDashboard,name='restaurant'),
-    path('profile/',views.profile,name='profile'),
+    path('rest_profile/',views.profile,name='rest_profile'),
     path('menu_builder/',include('menu.urls')),
 
     path('opening_hours/',views.opening_hours,name="opening_hours"),

@@ -25,7 +25,7 @@ def profile(request):
             userProf_form.save()
             rest_form.save()
             messages.success(request,'Restaurant details updated successfully!')
-            return redirect('profile')
+            return redirect('rest_profile')
 
     else:
         userProf_form=UserProfileForm(instance=userProf)
