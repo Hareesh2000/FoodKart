@@ -26,6 +26,7 @@ class Restaurant(models.Model):
                     mail_template='accounts/emails/admin_approval_email.html'
                     context={
                         'user':self.user,
+                        'to_email':self.user.email,
                     }
                     send_notification(mail_subject,mail_template,context)
             

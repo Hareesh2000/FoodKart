@@ -32,7 +32,7 @@ class UserProfileForm(forms.ModelForm):
 
     class Meta:
         model=UserProfile
-        fields=['profile_picture','cover_photo','address','country','state','city','pin_code','latitude','longitude']
+        fields=['profile_picture','cover_photo','address','state','city','pin_code','latitude','longitude']
 
 
     def __init__(self,*args,**kwargs): # to make readonly
