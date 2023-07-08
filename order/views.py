@@ -178,22 +178,17 @@ def order_complete(request):
     try:
         order=Order.objects.get(order_number=order_number,payment__transaction_id=transaction_id)
         ordered_foods=OrderedFood.objects.filter(order=order)
-        restaurant=ordered_foods[0].fooditem.restaurant
 
         subtotal=0
         for item in ordered_foods:
             subtotal+=(item.fooditem.price * item.quantity)
         
-    
-                
-                
-        
+
         tax_data=json.loads(order.tax_data)
 
         context={
             'order':order,
             'ordered_foods':ordered_foods,
-            'restaurant':restaurant,
             'subtotal':subtotal,
             'tax_data':tax_data,
         }
@@ -210,4 +205,3 @@ def order_complete(request):
 
 
 
-    return HttpResponse('payment recieved')

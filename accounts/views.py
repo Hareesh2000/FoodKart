@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.contrib import messages,auth
@@ -5,6 +6,7 @@ from accounts.utils import check_role_customer, check_role_vendor, detectUser, s
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib.auth.tokens import default_token_generator
+from order.models import Order
 from restaurant.forms import RestaurantForm
 from .models import User, UserProfile
 from django.template.defaultfilters import slugify
@@ -131,7 +133,16 @@ def myAccount(request):
 @login_required(login_url='login')
 @user_passes_test(check_role_customer)
 def custDashboard(request):
-    return render(request,'customer/custDashboard.html')
+    orders=Order.objects.filter(user=request.user,payment__isnull=False).order_by('-created_at')
+    recent_orders=orders[:5]
+    current_month_orders=Order.objects.filter(user=request.user,payment__isnull=False,created_at__month=datetime.now().month, created_at__year=datetime.now().year)
+
+    context={
+        'orders_count':orders.count(),
+        'current_month_orders':current_month_orders,
+        'recent_orders':recent_orders,
+    }
+    return render(request,'customer/custDashboard.html',context)
 
 @login_required(login_url='login')
 @user_passes_test(check_role_vendor)
