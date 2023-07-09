@@ -40,13 +40,14 @@
                 <table class="table">
                     <tbody>
                        
-                        <tr>Restaurant: <span class="font-weight-bold"><a class="text-muted" href="{% url 'restaurant_details' ordered_foods.first.fooditem.restaurant.restaurant_slug %}">{{ordered_foods.first.fooditem.restaurant}}</a></span></tr>  
+                        
                         <br><br>
                         {% for item in ordered_foods %}
                             <tr>
                                 <td><img src="{{item.fooditem.image.url}}" width="60" alt="Food Image"></td>
                                 <td>
                                     <p class="mb-0"><b>{{item.fooditem}}</b></p>
+                                    <td><span class="font-weight-bold"><a class="text-muted" href="{% url 'restaurant_details' item.fooditem.restaurant.restaurant_slug %}">{{item.fooditem.restaurant }}</a></span></td>
                                 </td>
                                 <td>{{ item.quantity }} QTY</td>
                                 <td>₹{{ item.fooditem.price }}</td>

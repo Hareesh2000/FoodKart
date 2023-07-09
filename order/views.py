@@ -1,11 +1,12 @@
 from django.http import HttpResponse, JsonResponse
 import simplejson as json
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from accounts.models import UserProfile
 from accounts.utils import send_notification
 from foodKart_main.settings import RZP_KEY_ID, RZP_KEY_SECRET
 from marketplace.context_processors import get_cart_totals
-from marketplace.models import Cart
+from marketplace.models import Cart, Tax
+from menu.models import FoodItem
 
 from order.forms import OrderForm
 from django.contrib.auth.decorators import login_required
@@ -53,6 +54,40 @@ def place_order(request):
     if cart_count<=0:
         return redirect('marketplace')
     
+    restaurants_ids=[]
+    for item in cart_items:
+        if item.fooditem.restaurant.id not in restaurants_ids:
+            restaurants_ids.append(item.fooditem.restaurant.id)
+
+
+    subtotal=0
+    taxes=Tax.objects.filter(is_active=True)
+    total_data={}
+    rest_id_subtotal={}
+
+    for item in cart_items:
+        fooditem=get_object_or_404(FoodItem,id=item.fooditem.id)
+        rest_id=fooditem.restaurant.id
+        if rest_id in rest_id_subtotal:
+            subtotal = rest_id_subtotal[rest_id]
+            subtotal+=(fooditem.price * item.quantity)
+            rest_id_subtotal[rest_id]=subtotal
+        else:
+            subtotal=(fooditem.price * item.quantity)
+            rest_id_subtotal[rest_id]=subtotal
+
+        tax_dict={}
+        for tax in taxes:
+            tax_type=tax.tax_type
+            tax_percentage=tax.tax_percentage
+            tax_amount=round((tax_percentage*subtotal)/100,2)
+            tax_dict.update({tax_type: {str(tax_percentage) : str(tax_amount)}})  
+
+        total_data.update({fooditem.restaurant.id:{str(subtotal): str(tax_dict)}})
+    
+
+        
+
     tax=get_cart_totals(request)['tax']   
     total=get_cart_totals(request)['total'] 
     tax_data=get_cart_totals(request)['tax_dict'] 
@@ -72,8 +107,10 @@ def place_order(request):
             order.user=request.user
             order.total=total
             order.tax_data=json.dumps(tax_data)
+            order.total_data=json.dumps(total_data)
             order.save()
             order.order_number = generate_order_number(order.id)
+            order.restaurants.add(*restaurants_ids)
             order.save()
 
             DATA = {
@@ -144,20 +181,23 @@ def payment(request):
             'to_email':order.email,
         }
 
-        send_notification(mail_subject,mail_template,context)
+        #send_notification(mail_subject,mail_template,context)
 
         # sending order email to restaurant
         
         mail_subject='You have received a new order.'
         mail_template='order/email/order_received_email.html'
-
+        to_emails=[]
+        for item in cart_items:
+            if item.fooditem.restaurant.user.email not in to_emails:
+                to_emails.append(item.fooditem.restaurant.user.email)
+                
         context={
-            'user': cart_items[0].fooditem.restaurant.restaurant_name,
             'order':order,
-            'to_email':cart_items[0].fooditem.restaurant.user.email,
+            'to_email':to_emails,
         }
 
-        send_notification(mail_subject,mail_template,context)
+        #send_notification(mail_subject,mail_template,context)
 
         # clearing cart
         cart_items.delete()

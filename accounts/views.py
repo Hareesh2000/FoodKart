@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib.auth.tokens import default_token_generator
 from order.models import Order
 from restaurant.forms import RestaurantForm
+from restaurant.models import Restaurant
 from .models import User, UserProfile
 from django.template.defaultfilters import slugify
 
@@ -147,7 +148,27 @@ def custDashboard(request):
 @login_required(login_url='login')
 @user_passes_test(check_role_vendor)
 def restDashboard(request):
-    return render(request,'restaurant/restDashboard.html')
+    restaurant=Restaurant.objects.get(user=request.user)
+    orders=Order.objects.filter(restaurants__in=[restaurant.id],payment__isnull=False).order_by('-created_at')
+    recent_orders=orders[:5]
+
+    cur_month_orders=Order.objects.filter(restaurants__in=[restaurant.id],payment__isnull=False,
+                         created_at__month=datetime.now().month,created_at__year=datetime.now().year)
+    cur_month_revenue=0
+    for order in cur_month_orders:
+        cur_month_revenue+=order.get_total_by_restaurant()['total']
+
+    total_revenue=0
+    for order in orders:
+        total_revenue+=order.get_total_by_restaurant()['total']
+    context={
+        'orders':orders,
+        'orders_count':orders.count(),
+        'recent_orders':recent_orders,
+        'total_revenue':total_revenue,
+        'cur_month_revenue':cur_month_revenue,
+    }
+    return render(request,'restaurant/restDashboard.html',context)
 
 def forgot_password(request):
     if request.method=='POST':

@@ -6,6 +6,7 @@ from accounts.forms import UserProfileForm
 from accounts.models import UserProfile
 from accounts.utils import check_role_vendor
 from menu.models import Category, FoodItem
+from order.models import Order, OrderedFood
 from restaurant.models import OpeningHour, Restaurant
 from .forms import OpeningHourForm, RestaurantForm
 from django.contrib import messages
@@ -83,4 +84,25 @@ def delete_opening_hour(request,pk=None):
         
         return JsonResponse(response)
     
+def order_details(request,order_number):
+    order=Order.objects.get(order_number=order_number,payment__isnull=False)
+    ordered_foods=OrderedFood.objects.filter(order=order,fooditem__restaurant=get_restaurant(request)['restaurant'])
 
+    context={
+        'order':order,
+        'ordered_foods':ordered_foods,
+        'subtotal':order.get_total_by_restaurant()['subtotal'],
+        'tax_data':order.get_total_by_restaurant()['tax_dict'],
+        'total':order.get_total_by_restaurant()['total'],
+    }
+    return render(request,'restaurant/order_details.html',context)
+
+
+def my_orders(request):
+    restaurant=Restaurant.objects.get(user=request.user)
+    orders=Order.objects.filter(restaurants__in=[restaurant.id],payment__isnull=False).order_by('-created_at')
+
+    context={
+        'orders':orders,
+    }
+    return render(request,'restaurant/my_orders.html',context)
